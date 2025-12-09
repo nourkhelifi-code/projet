@@ -161,64 +161,64 @@ exports.updateProfile = async (req,res) => {
 
 
 
-// ========================================
-// 3. PROFIL PUBLIC D’UN UTILISATEUR PAR ID (le plus impressionnant)
-// ========================================
-exports.getPublicProfile = async (req, res) => {
-  try {
-    const User = require("../models/user");
-    const Candidature = require("../models/candidature");
+// // ========================================
+// // 3. PROFIL PUBLIC D’UN UTILISATEUR PAR ID (le plus impressionnant)
+// // ========================================
+// exports.getPublicProfile = async (req, res) => {
+//   try {
+//     const User = require("../models/user");
+//     const Candidature = require("../models/candidature");
 
-    const user = await User.findById(req.params.id)
-      .select("-password -resetPasswordToken -resetPasswordExpires -__v");
+//     const user = await User.findById(req.params.id)
+//       .select("-password -resetPasswordToken -resetPasswordExpires -__v");
 
-    if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
-    }
+//     if (!user) {
+//       return res.status(404).json({ message: "Utilisateur non trouvé" });
+//     }
 
-    // Récupère ses événements acceptés
-    const participations = await Candidature.find({
-      user_id: user._id,
-      statut: "acceptee",
-    }).populate("event_id", "titre date lieu photo couverture");
+//     // Récupère ses événements acceptés
+//     const participations = await Candidature.find({
+//       user_id: user._id,
+//       statut: "acceptee",
+//     }).populate("event_id", "titre date lieu photo couverture");
 
-    const badges = user.badges || [];
+//     const badges = user.badges || [];
 
-    res.json({
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        ville: user.ville || "",
-        phone: user.phone || "",
-        photo: user.photo || "",
-        bio: user.bio || "",
+//     res.json({
+//       user: {
+//         _id: user._id,
+//         name: user.name,
+//         email: user.email,
+//         role: user.role,
+//         ville: user.ville || "",
+//         phone: user.phone || "",
+//         photo: user.photo || "",
+//         bio: user.bio || "",
 
-        participations: participations.map((c) => ({
-          _id: c.event_id._id,
-          titre: c.event_id.titre,
-          date: c.event_id.date,
-          lieu: c.event_id.lieu,
-          photo: c.event_id.photo || c.event_id.couverture,
-        })),
-        nombre_participations: participations.length,
-        badges: badges,
-        niveau:
-          badges.length >= 10
-            ? "Légende"
-            : badges.length >= 5
-            ? "Expert"
-            : badges.length >= 2
-            ? "Confirmé"
-            : "Débutant",
-      },
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "ID invalide ou erreur serveur" });
-  }
-};
+//         participations: participations.map((c) => ({
+//           _id: c.event_id._id,
+//           titre: c.event_id.titre,
+//           date: c.event_id.date,
+//           lieu: c.event_id.lieu,
+//           photo: c.event_id.photo || c.event_id.couverture,
+//         })),
+//         nombre_participations: participations.length,
+//         badges: badges,
+//         niveau:
+//           badges.length >= 10
+//             ? "Légende"
+//             : badges.length >= 5
+//             ? "Expert"
+//             : badges.length >= 2
+//             ? "Confirmé"
+//             : "Débutant",
+//       },
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "ID invalide ou erreur serveur" });
+//   }
+// };
 
 
 
@@ -267,9 +267,7 @@ exports.getMyProfile = async (req, res) => {
       });
     }
 
-    // ============================
-    // 🏢 SI ORGANISATION
-    // ============================
+    // ORGANISATION
     if (user.role === "organisation") {
 
       // 1. Nombre total d'événements créés
@@ -295,6 +293,67 @@ exports.getMyProfile = async (req, res) => {
 
   } catch (error) {
     console.error("Erreur getMyProfile:", error);
+    res.status(500).json({ message: "Erreur serveur" });
+  }
+};
+
+
+
+
+exports.getUserProfile = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // On récupère un autre utilisateur
+    const user = await User.findById(userId).lean();
+    if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
+    // ============================
+    // 👤 SI BÉNÉVOLE
+    // ============================
+    if (user.role === "benevole") {
+      const badges = await UserBadge.find({ user_id: userId })
+        .populate("badge_id")
+        .sort({ date_obtention: -1 })
+        .lean();
+
+      const totalCandidatures = await Candidature.countDocuments({ user_id: userId });
+
+      return res.json({
+        user,
+        stats: {
+          totalBadges: badges.length,
+          totalCandidatures,
+        },
+        badges,
+      });
+    }
+
+    // ============================
+    // 🏢 SI ORGANISATION
+    // ============================
+    if (user.role === "organisation") {
+
+      const totalEvents = await Evenement.countDocuments({ organisation_id: userId });
+
+      const lastEvents = await Evenement.find({ organisation_id: userId })
+        .sort({ createdAt: -1 })
+        .limit(3)
+        .lean();
+
+      return res.json({
+        user,
+        stats: {
+          totalEvents,
+        },
+        lastEvents,
+      });
+    }
+
+    return res.status(400).json({ message: "Rôle inconnu" });
+
+  } catch (error) {
+    console.error("Erreur getUserProfile:", error);
     res.status(500).json({ message: "Erreur serveur" });
   }
 };

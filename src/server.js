@@ -49,7 +49,7 @@
     app.use('/auth', loginRouter);
     app.use('/profil', profileRouter);
     app.use('/authgoogle', googleAuthRouter);
-    app.use('/evenements', eventRouter);
+    app.use('/events', eventRouter);
     app.use("/inscription", authRouter);  
     app.use("/events-list", eventsListRoutes);
     app.use("/evenements", eventManagementRoutes);
