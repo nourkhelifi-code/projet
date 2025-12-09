@@ -20,6 +20,7 @@ const notificationSchema = new mongoose.Schema({
     benevole_nom: String,
     evenement_id: { type: mongoose.Schema.Types.ObjectId, ref: "Evenement" },
     evenement_titre: String,
+    candidature_id: { type: mongoose.Schema.Types.ObjectId, ref: "Candidature" }
   }
 }, { timestamps: true });
 

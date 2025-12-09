@@ -42,7 +42,8 @@
     const candidatureRouter = require('./routes/candidature');
     const statsRoute        = require('./routes/statsRoutes');
     const chatbotRoutes     = require("./routes/chatbotRoutes");
-    
+    const notificationRoutes = require('./routes/notifications');
+
 
     // ===== Route prefix =====
     app.use('/auth', loginRouter);
@@ -54,11 +55,12 @@
     app.use("/evenements", eventManagementRoutes);
     app.use('/candidature',candidatureRouter);
     app.use('/stats',      statsRoute);
-    app.use("/chatbot",    chatbotRoutes);   // AJOUTE ÇA À LA PLACE // <- corrigé ici
+    app.use("/chatbot",    chatbotRoutes);   
+    app.use('/notifications', notificationRoutes);
     const path = require('path');
 
   // Servir les fichiers uploadés
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+  app.use('/uploads', express.static(path.join(__dirname,".." ,'uploads')));
 
 
   console.log("Routes auth :", authRouter.stack.map(r => r.route && r.route.path));

@@ -43,6 +43,7 @@ exports.participer = async (req, res) => {
       donnees: {
         benevole_id: benevoleId,
         benevole_nom: benevole.name,
+        candidature_id: candidature._id,
         evenement_id: evenementId,
         evenement_titre: evenement.titre,
       }
@@ -94,21 +95,18 @@ exports.updateStatus = async (req, res) => {
         ? `Félicitations ! Ta candidature pour "${candidature.event_id.titre}" a été acceptée !`
         : `Ta candidature pour "${candidature.event_id.titre}" a été refusée. Merci pour ton intérêt !`;
 
-    await Notification.create({
-      destinataire_id: candidature.user_id._id,
-      type: "candidature_traitee",
-      titre: statut === "acceptee" ? "Accepté" : "Refusé",
-      message: messageNotif,
-      lien: `/evenement/${candidature.event_id._id}`,
-      lu: false,
-      donnees: {
-        benevole_id: candidature.user_id._id,
-        benevole_nom: candidature.user_id.name,
-        evenement_id: candidature.event_id._id,
-        evenement_titre: candidature.event_id.titre,
-        statut: candidature.statut,
-      }
-    });
+    // Marquer la notification de demande comme "lue"
+    await Notification.updateOne(
+      {
+        destinataire_id: req.user._id,
+        type: "nouvelle_candidature",
+        "donnees.benevole_id": candidature.user_id._id,
+        "donnees.evenement_id": candidature.event_id._id,
+        lu: false
+      },
+      { $set: { lu: true } }
+    );
+
 
     // Si accepté → déclencher les badges
     if (statut === "acceptee") {
