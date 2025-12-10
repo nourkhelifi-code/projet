@@ -24,7 +24,7 @@ exports.registerVolunteer = async (req, res) => {
     }
 
     // Hash du mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10);
+   //const hashedPassword = await bcrypt.hash(password, 10);
 
     // Photo par défaut
     const defaultPhoto = "default-avatar.jpg";
@@ -33,7 +33,7 @@ exports.registerVolunteer = async (req, res) => {
     // Création de l'utilisateur
     const newUser = new User({
       email,
-      password: hashedPassword,
+      password,
       name,
       role,
       ville,
@@ -84,7 +84,7 @@ exports.registerOrganization = async (req, res) => {
       return res.status(400).json({ message: "Email déjà utilisé" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    //const hashedPassword = await bcrypt.hash(password, 10);
 
     const defaultPhoto = "default-avatar.jpg";
     const photoFilename = req.file ? req.file.filename : defaultPhoto;
@@ -96,7 +96,7 @@ exports.registerOrganization = async (req, res) => {
 
     const newUser = new User({
       email,
-      password: hashedPassword,
+      password,
       name,
       role,
       ville,
