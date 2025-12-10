@@ -125,44 +125,54 @@ exports.getEventsPositions = async (req, res) => {
 
 
 // POST /events
+// controllers/eventController.js
 exports.createEvenement = async (req, res) => {
   try {
     console.log("BODY RECU :", req.body);
-
-    const organisationId = req.user?.id || "673a60c43a74ef29d8c03fd1";
 
     const {
       titre,
       description,
       date_event,
       localisation,
-      ville, // utile si tu veux l’ajouter dans le modèle plus tard
       categorie,
       nb_places,
       latitude,
       longitude,
+      organisation_id  // ← envoyé par le frontend
     } = req.body;
 
+    // Validation simple
+    if (!organisation_id) {
+      return res.status(400).json({ message: "organisation_id manquant" });
+    }
+
     const newEvent = new Evenement({
-      organisation_id: organisationId,
+      organisation_id,
       titre,
       description,
       date_event,
-      localisation, // <-- propre
+      localisation,
       position: {
         latitude: Number(latitude),
         longitude: Number(longitude),
       },
       categorie,
-      nb_places,
+      nb_places: Number(nb_places) || 10,
+      statut: 'Ouvert'
     });
 
     const saved = await newEvent.save();
-    res.status(201).json(saved);
+
+    res.status(201).json({
+      success: true,
+      message: "Événement créé !",
+      event: saved
+    });
 
   } catch (err) {
     console.error("Erreur création événement :", err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Erreur serveur" });
   }
 };
 
